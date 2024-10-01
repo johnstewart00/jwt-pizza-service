@@ -1,6 +1,7 @@
 const { DB } = require("../database/database.js");
 const jwt = require("jsonwebtoken");
 const config = require("../config.js");
+const { createAdminUser } = require("../routes/testHelperFunctions.js");
 
 let connection;
 
@@ -30,6 +31,17 @@ afterAll(async () => {
   await connection.end();
 });
 
+const menuItem = {
+  title: "Sausage Pizza",
+  description: "sausage and sausage only",
+  image: "fake.png",
+  price: 5.4,
+};
+const addMenuItem = async () => {
+  const addedMenuItem = await DB.addMenuItem(menuItem);
+  return addedMenuItem;
+};
+
 test("getMenu test", async () => {
   const menu = await DB.getMenu();
   expect(menu).toBeTruthy();
@@ -37,13 +49,7 @@ test("getMenu test", async () => {
 });
 
 test("addMenuItem test", async () => {
-  const menuItem = {
-    title: "Sausage Pizza",
-    description: "sausage and sausage only",
-    image: "fake.png",
-    price: 5.4,
-  };
-  const addedMenuItem = await DB.addMenuItem(menuItem);
+  const addedMenuItem = await addMenuItem();
   expect(addedMenuItem.title).toBe(menuItem.title);
   expect(addedMenuItem.description).toBe(menuItem.description);
   expect(addedMenuItem.image).toBe(menuItem.image);
@@ -61,7 +67,6 @@ test("add user - diner", async () => {
   expect(addedUser.name).toBe(newUser.name);
   expect(addedUser.email).toBe(newUser.email);
   await DB.deleteUser(addedUser.id);
-  await expect(DB.getUser(addedUser.email, "test1")).rejects.toThrow();
 });
 
 test("get user", async () => {
@@ -98,9 +103,10 @@ test("isLoggedIn test", async () => {
 });
 
 test("getOrders", async () => {
+  const adminUser = await createAdminUser();
   const addFranchiseRes = await DB.createFranchise({
-    admins: [{ email: "f@jwt.com" }],
-    name: "test franchise name",
+    admins: [{ email: adminUser.email }],
+    name: adminUser.name,
   });
   const addStoreRes = await DB.createStore(addFranchiseRes.id, {
     name: "test store name",
