@@ -127,7 +127,7 @@ class DB {
   async deleteUser(userId) {
     const connection = await this.getConnection();
     try {
-      await connection.query(`DELETE FROM userrole WHERE userId = ?`, [userId]);
+      await connection.query(`DELETE FROM userRole WHERE userId = ?`, [userId]);
       await connection.query(`DELETE FROM user WHERE id = ?`, [userId]);
       return "User Deleted";
     } finally {
