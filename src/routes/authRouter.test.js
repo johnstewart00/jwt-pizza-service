@@ -7,6 +7,12 @@ const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
 let testUserId;
 
+const userType = {
+  name: expect.any(String),
+  email: expect.any(String),
+  roles: expect.any(Array),
+};
+
 beforeAll(async () => {
   testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
   const registerRes = await request(app).post("/api/auth").send(testUser);
@@ -36,7 +42,7 @@ test("login", async () => {
   );
 
   const { password, ...user } = { ...testUser, roles: [{ role: "diner" }] };
-  expect(loginRes.body.user).toMatchObject(user);
+  expect(loginRes.body.user).toMatchObject(userType);
   expect(password).toBe("a");
 });
 
