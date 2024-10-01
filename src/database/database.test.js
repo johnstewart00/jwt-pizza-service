@@ -43,6 +43,7 @@ const addMenuItem = async () => {
 };
 
 test("getMenu test", async () => {
+  await addMenuItem();
   const menu = await DB.getMenu();
   expect(menu).toBeTruthy();
   expect(menu.length).toBeGreaterThan(0);
