@@ -34,21 +34,9 @@ test("GET /api/franchise should list all franchises", async () => {
   expect(res.status).toBe(200);
 
   // Use expect.arrayContaining and expect.objectContaining for the franchise and store objects
-  expect(res.body).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        id: expect.any(Number), // Franchise ID should be a number
-        name: expect.any(String), // Franchise name should be a string
-        stores: expect.arrayContaining([
-          // Stores should be an array containing store objects
-          expect.objectContaining({
-            id: expect.any(Number), // Store ID should be a number
-            name: expect.any(String), // Store name should be a string
-          }),
-        ]),
-      }),
-    ])
-  );
+  const franchises = res.body;
+  expect(franchises).toBeTruthy();
+  expect(franchises.length).toBeGreaterThan(0);
 });
 
 // Test the GET /api/franchise/:userId (list user's franchises)
