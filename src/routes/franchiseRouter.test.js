@@ -29,6 +29,7 @@ afterAll(async () => {
 });
 
 test("GET /api/franchise should list all franchises", async () => {
+  await createFranchise();
   const res = await request(app).get("/api/franchise");
 
   expect(res.status).toBe(200);
@@ -48,11 +49,10 @@ test("GET /api/franchise/:userId should list user franchises ", async () => {
   expect(res.body).toEqual([]);
 });
 
-test("create franchise", async () => {
+const createFranchise = async (rand) => {
   const adminUser = await createAdminUser();
   const loginRes = await request(app).put("/api/auth").send(adminUser);
   const token = loginRes.body.token;
-  const rand = randomName();
 
   const createFranchiseRes = await request(app)
     .post("/api/franchise")
@@ -61,7 +61,12 @@ test("create franchise", async () => {
       name: `${rand} Franchise`,
       admins: [{ email: "f@jwt.com" }],
     });
+  return createFranchiseRes;
+};
 
+test("create franchise", async () => {
+  const rand = randomName();
+  const createFranchiseRes = await createFranchise(rand);
   expect(createFranchiseRes.status).toBe(200);
 
   // Use toMatchObject to check for the partial object match
