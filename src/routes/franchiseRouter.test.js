@@ -17,9 +17,9 @@ const createFranchise = async (rand) => {
     .set("Authorization", `Bearer ${token}`)
     .send({
       name: `${rand} Franchise`,
-      admins: [{ email: "f@jwt.com" }],
+      admins: [{ email: adminUser.email }],
     });
-  return { createFranchiseRes, token };
+  return { createFranchiseRes, token, adminUser };
 };
 
 const createStoreForFranchise = async (rand) => {
@@ -79,13 +79,13 @@ test("GET /api/franchise/:userId should list user franchises ", async () => {
 
 test("create franchise", async () => {
   const rand = randomName();
-  const { createFranchiseRes } = await createFranchise(rand);
+  const { createFranchiseRes, adminUser } = await createFranchise(rand);
   expect(createFranchiseRes.status).toBe(200);
 
   // Use toMatchObject to check for the partial object match
   expect(createFranchiseRes.body).toMatchObject({
     name: `${rand} Franchise`,
-    admins: [{ email: "f@jwt.com" }],
+    admins: [{ email: adminUser.email }],
     id: expect.any(Number), // If the id is dynamically generated, use expect.any(Number)
   });
 });
