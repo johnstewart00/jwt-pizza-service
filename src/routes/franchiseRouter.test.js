@@ -7,6 +7,34 @@ const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
 let testUserId;
 
+const createFranchise = async (rand) => {
+  const adminUser = await createAdminUser();
+  const loginRes = await request(app).put("/api/auth").send(adminUser);
+  const token = loginRes.body.token;
+
+  const createFranchiseRes = await request(app)
+    .post("/api/franchise")
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      name: `${rand} Franchise`,
+      admins: [{ email: "f@jwt.com" }],
+    });
+  return { createFranchiseRes, token };
+};
+
+const createStoreForFranchise = async (rand) => {
+  const { createFranchiseRes, token } = await createFranchise(randomName());
+  const franchiseId = createFranchiseRes.body.id; // Get the id of the created franchise
+  const storeName = `${rand} Store`;
+  const createStoreRes = await request(app)
+    .post(`/api/franchise/${franchiseId}/store`)
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      name: storeName,
+    });
+  return { createStoreRes, franchiseId, token };
+};
+
 beforeAll(async () => {
   testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
   const registerRes = await request(app).post("/api/auth").send(testUser);
@@ -49,24 +77,9 @@ test("GET /api/franchise/:userId should list user franchises ", async () => {
   expect(res.body).toEqual([]);
 });
 
-const createFranchise = async (rand) => {
-  const adminUser = await createAdminUser();
-  const loginRes = await request(app).put("/api/auth").send(adminUser);
-  const token = loginRes.body.token;
-
-  const createFranchiseRes = await request(app)
-    .post("/api/franchise")
-    .set("Authorization", `Bearer ${token}`)
-    .send({
-      name: `${rand} Franchise`,
-      admins: [{ email: "f@jwt.com" }],
-    });
-  return createFranchiseRes;
-};
-
 test("create franchise", async () => {
   const rand = randomName();
-  const createFranchiseRes = await createFranchise(rand);
+  const { createFranchiseRes } = await createFranchise(rand);
   expect(createFranchiseRes.status).toBe(200);
 
   // Use toMatchObject to check for the partial object match
@@ -78,138 +91,39 @@ test("create franchise", async () => {
 });
 
 test("delete franchise", async () => {
-  // Step 1: Create an admin user for authentication
-  const adminUser = await createAdminUser();
-
-  // Step 2: Log in the admin user to get a token
-  const loginRes = await request(app).put("/api/auth").send(adminUser);
-  const token = loginRes.body.token;
-
-  // Step 3: Create a franchise first, so we have something to delete
-  const rand = randomName();
-  const createFranchiseRes = await request(app)
-    .post("/api/franchise")
-    .set("Authorization", `Bearer ${token}`)
-    .send({
-      name: `${rand} Franchise`,
-      admins: [{ email: "f@jwt.com" }],
-    });
-
-  // Step 4: Ensure the franchise was created successfully
-  expect(createFranchiseRes.status).toBe(200);
-  expect(createFranchiseRes.body).toMatchObject({
-    name: `${rand} Franchise`,
-    admins: [{ email: "f@jwt.com" }],
-    id: expect.any(Number),
-  });
-
-  // Step 5: Now delete the created franchise
+  const { createFranchiseRes, token } = await createFranchise(randomName());
   const franchiseId = createFranchiseRes.body.id; // Get the id of the created franchise
   const deleteFranchiseRes = await request(app)
     .delete(`/api/franchise/${franchiseId}`)
     .set("Authorization", `Bearer ${token}`);
 
-  // Step 6: Check that the franchise was deleted successfully
   expect(deleteFranchiseRes.status).toBe(200);
   expect(deleteFranchiseRes.body).toEqual({ message: "franchise deleted" });
 });
 
 test("create store for franchise", async () => {
-  // Step 1: Create an admin user for authentication
-  const adminUser = await createAdminUser();
-
-  // Step 2: Log in the admin user to get a token
-  const loginRes = await request(app).put("/api/auth").send(adminUser);
-  const token = loginRes.body.token;
-
-  // Step 3: Create a franchise first, so we have something to add a store to
-  const rand = randomName();
-  const createFranchiseRes = await request(app)
-    .post("/api/franchise")
-    .set("Authorization", `Bearer ${token}`)
-    .send({
-      name: `${rand} Franchise`,
-      admins: [{ email: "f@jwt.com" }],
-    });
-
-  // Step 4: Ensure the franchise was created successfully
-  expect(createFranchiseRes.status).toBe(200);
-  expect(createFranchiseRes.body).toMatchObject({
-    name: `${rand} Franchise`,
-    admins: [{ email: "f@jwt.com" }],
-    id: expect.any(Number),
-  });
-
-  // Step 5: Now create a store for the created franchise
-  const franchiseId = createFranchiseRes.body.id; // Get the id of the created franchise
-  const storeName = `${rand} Store`;
-  const createStoreRes = await request(app)
-    .post(`/api/franchise/${franchiseId}/store`)
-    .set("Authorization", `Bearer ${token}`)
-    .send({
-      name: storeName,
-    });
-
-  // Step 6: Check that the store was created successfully
+  const storeName = randomName();
+  const { createStoreRes, franchiseId } = await createStoreForFranchise(
+    storeName
+  );
   expect(createStoreRes.status).toBe(200);
   expect(createStoreRes.body).toMatchObject({
-    name: storeName,
+    name: storeName + " Store",
     franchiseId: franchiseId, // Check if the store is associated with the correct franchise
     id: expect.any(Number), // Store ID should be a number
   });
 });
 
 test("delete store for franchise", async () => {
-  // Step 1: Create an admin user for authentication
-  const adminUser = await createAdminUser();
+  const { createStoreRes, franchiseId, token } = await createStoreForFranchise(
+    randomName()
+  );
 
-  // Step 2: Log in the admin user to get a token
-  const loginRes = await request(app).put("/api/auth").send(adminUser);
-  const token = loginRes.body.token;
-
-  // Step 3: Create a franchise first, so we have something to add a store to
-  const rand = randomName();
-  const createFranchiseRes = await request(app)
-    .post("/api/franchise")
-    .set("Authorization", `Bearer ${token}`)
-    .send({
-      name: `${rand} Franchise`,
-      admins: [{ email: "f@jwt.com" }],
-    });
-
-  // Step 4: Ensure the franchise was created successfully
-  expect(createFranchiseRes.status).toBe(200);
-  expect(createFranchiseRes.body).toMatchObject({
-    name: `${rand} Franchise`,
-    admins: [{ email: "f@jwt.com" }],
-    id: expect.any(Number),
-  });
-
-  // Step 5: Now create a store for the created franchise
-  const franchiseId = createFranchiseRes.body.id; // Get the id of the created franchise
-  const storeName = `${rand} Store`;
-  const createStoreRes = await request(app)
-    .post(`/api/franchise/${franchiseId}/store`)
-    .set("Authorization", `Bearer ${token}`)
-    .send({
-      name: storeName,
-    });
-
-  // Step 6: Check that the store was created successfully
-  expect(createStoreRes.status).toBe(200);
-  expect(createStoreRes.body).toMatchObject({
-    name: storeName,
-    franchiseId: franchiseId, // Check if the store is associated with the correct franchise
-    id: expect.any(Number), // Store ID should be a number
-  });
-
-  // Step 7: Now delete the store
   const storeId = createStoreRes.body.id; // Get the store ID that was created
   const deleteStoreRes = await request(app)
     .delete(`/api/franchise/${franchiseId}/store/${storeId}`)
     .set("Authorization", `Bearer ${token}`);
 
-  // Step 8: Check that the store was deleted successfully
   expect(deleteStoreRes.status).toBe(200);
   expect(deleteStoreRes.body).toEqual({ message: "store deleted" });
 });
