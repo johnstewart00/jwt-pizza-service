@@ -10,23 +10,21 @@ const testUser = {
 };
 let testUserAuthToken;
 let testUserId;
+let connection;
 
 beforeAll(async () => {
+  connection = await DB._getConnection();
+  await connection.beginTransaction();
   testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
   const registerRes = await request(app).post("/api/auth").send(testUser);
   testUserAuthToken = registerRes.body.token;
   testUserId = registerRes.body.user.id;
 });
 
-afterEach(async () => {
-  // Ensure all connections are closed after each test
-  if (DB && DB.connection) {
-    await DB.connection.end(); // or DB.connection.close() based on your DB library
-  }
-});
-
 // If needed, clean up after all tests
 afterAll(async () => {
+  await connection.rollback();
+  await connection.end();
   if (DB && DB.connection) {
     await DB.connection.end();
   }

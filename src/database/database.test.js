@@ -14,20 +14,17 @@ const user = {
 
 beforeAll(async () => {
   connection = await DB.getConnection(); // No need for done()
+  await connection.beginTransaction();
 });
 
 beforeEach(async () => {
-  await connection.beginTransaction();
   const newUser = { ...user };
   const addRes = await DB.addUser(newUser);
   user.id = addRes.id;
 });
 
-afterEach(async () => {
-  await connection.rollback();
-});
-
 afterAll(async () => {
+  await connection.rollback();
   await connection.end();
 });
 
