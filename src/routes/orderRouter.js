@@ -120,11 +120,11 @@ orderRouter.post(
     const order = await DB.addDinerOrder(req.user, orderReq);
 
     // log factory order
-    const orderInfo = {
-      diner: { id: req.user.id, name: req.user.name, email: req.user.email },
-      order,
-    };
-    logger.factoryLogger(orderInfo);
+    // const orderInfo = {
+    //   diner: { id: req.user.id, name: req.user.name, email: req.user.email },
+    //   order,
+    // };
+    // logger.factoryLogger(orderInfo);
 
     const pizzaCreationStart = Date.now(); // Start timer for pizza creation
 
