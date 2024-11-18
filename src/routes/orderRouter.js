@@ -4,9 +4,6 @@ const { Role, DB } = require("../database/database.js");
 const { authRouter } = require("./authRouter.js");
 const { asyncHandler, StatusCodeError } = require("../endpointHelper.js");
 const metrics = require("../metrics.js");
-// const Logger = require("pizza-logger");
-// const logger = new Logger(config);
-
 const orderRouter = express.Router();
 
 orderRouter.endpoints = [
@@ -118,13 +115,6 @@ orderRouter.post(
   asyncHandler(async (req, res) => {
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
-
-    // log factory order
-    // const orderInfo = {
-    //   diner: { id: req.user.id, name: req.user.name, email: req.user.email },
-    //   order,
-    // };
-    // logger.factoryLogger(orderInfo);
 
     const pizzaCreationStart = Date.now(); // Start timer for pizza creation
 
