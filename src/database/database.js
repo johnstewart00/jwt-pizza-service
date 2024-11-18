@@ -4,10 +4,11 @@ const config = require("../config.js");
 const { StatusCodeError } = require("../endpointHelper.js");
 const { Role } = require("../model/model.js");
 const dbModel = require("./dbModel.js");
-const logger = require("../logger.js");
+const Logger = require("pizza-logger");
 class DB {
   constructor() {
     this.initialized = this.initializeDatabase();
+    this.logger = new Logger(config);
   }
 
   async getMenu() {
@@ -396,34 +397,9 @@ class DB {
   }
 
   async query(connection, sql, params) {
-    const start = Date.now(); // Track query execution time
-    try {
-      // Log the SQL query and parameters before execution
-      logger.log("info", "sql-query", {
-        query: sql,
-        params: params,
-      });
-
-      const [results] = await connection.execute(sql, params);
-
-      // Log the execution time after the query is successful
-      const duration = Date.now() - start;
-      logger.log("info", "sql-query-success", {
-        query: sql,
-        params: params,
-        duration: `${duration}ms`,
-      });
-
-      return results;
-    } catch (error) {
-      // Log any errors during query execution
-      logger.log("error", "sql-query-failure", {
-        query: sql,
-        params: params,
-        error: error.message,
-      });
-      throw error; // Re-throw the error to maintain existing behavior
-    }
+    this.logger.dbLogger(sql);
+    const [results] = await connection.execute(sql, params);
+    return results;
   }
 
   async getID(connection, key, value, table) {
