@@ -1,4 +1,4 @@
-const Logger = require("pizza-logger");
+const Logger = require("./Logger");
 const config = require("./config");
 const logger = new Logger(config);
 
